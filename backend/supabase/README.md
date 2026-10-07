@@ -99,3 +99,13 @@ Supabase 匿名注册另有平台 IP 限流，当前默认每 IP 每小时 30 �
 - [API keys](https://supabase.com/docs/guides/getting-started/api-keys)：浏览器公钥与服务端密钥的边界。
 - [Free 计费](https://supabase.com/docs/guides/platform/billing-on-supabase)和[暂停规则](https://supabase.com/docs/guides/platform/free-project-pausing)：免费额度与维护限制。
 - [组织信息](https://supabase.com/docs/reference/api/v1-get-an-organization)、[创建项目](https://supabase.com/docs/reference/api/v1-create-a-project)、[Auth 配置](https://supabase.com/docs/reference/api/v1-update-auth-service-config)、[项目 API keys](https://supabase.com/docs/reference/api/v1-get-project-api-keys)、[创建管理员](https://supabase.com/docs/reference/javascript/auth-admin-createuser)：部署脚本所用的官方接口。当前匿名 Auth 字段以 [官方 OpenAPI](https://github.com/supabase/supabase/blob/master/apps/docs/spec/api_v1_openapi.json) 的 `external_anonymous_users_enabled` 和 `rate_limit_anonymous_users` 为准。
+
+## 只读运行检查
+
+`service-health.sql` 是独立迁移，由部署者在主 schema 之后执行；是否完成云端执行应以实际 API 验证记录为准。
+它增加 `public.wedding_service_health()`，仅返回 `{ok:true,checkedAt:UTC时间}`，不访问或修改回执、用户、人数和管理设置。
+函数使用调用者权限，移除默认 PUBLIC 执行权限，仅向 anon/authenticated 明确授予执行权限，不扩大表读取/写入权限。
+
+Deno 中转的 `runtime.ts` 使用公开 publishable key 每 6 小时查询该接口。检查无需管理 PAT 或管理员账户，
+可降低 Free 项目长期低活动暂停风险；仍需确认迁移完成、Deno 计划任务发现及执行成功。详细运行边界见
+`backend/deno-proxy/README.md`。免费计划没有永久可用保证。

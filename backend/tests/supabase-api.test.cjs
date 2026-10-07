@@ -23,7 +23,7 @@ function receipt(changes = {}) {
 function json(body, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }); }
 async function fixture(options = {}) {
   const number = ++sequence;
-  const local = storage(); const session = storage(); const requests = [];
+  const local = options.local ?? storage(); const session = options.session ?? storage(); const requests = [];
   const config = Object.hasOwn(options, 'config') ? options.config : { provider: 'supabase', url: `https://wedding-test-${number}.supabase.co`, publishableKey: 'sb_publishable_test_only' };
   const guest = authSession('guest'); const owner = authSession('admin');
   global.localStorage = local; global.sessionStorage = session;
@@ -31,7 +31,7 @@ async function fixture(options = {}) {
     const url = new URL(typeof input === 'string' ? input : input.url || String(input));
     if (url.pathname.endsWith('/data/backend.json')) return json(config);
     const body = init.body ? JSON.parse(init.body) : null;
-    const request = { path: url.pathname, query: url.search, body, headers: new Headers(init.headers), signal: init.signal };
+    const request = { origin: url.origin, path: url.pathname, query: url.search, body, headers: new Headers(init.headers), signal: init.signal };
     requests.push(request);
     if (options.handle) {
       const handled = await options.handle(request);
@@ -166,6 +166,47 @@ test('type-conversion errors use a guest-facing message without raw database tex
   await assert.rejects(api.submitRsvp({ name: '测试', people: 2, submissionId: randomUUID() }), error => {
     assert.equal(error.code, 'INVALID_INPUT'); assert.equal(error.message.includes('PRIVATE'), false); return true;
   });
+});
+
+test('moving the same project behind a proxy preserves visitor ownership, operations and admin sessions', async () => {
+  const identityHost = 'abcdefghijklmnopqrst.supabase.co';
+  const directConfig = { provider: 'supabase', url: 'https://' + identityHost, publishableKey: 'sb_publishable_test_only' };
+  const original = await fixture({ config: directConfig });
+  const payload = { name: '迁移测试宾客', people: 4, submissionId: randomUUID() };
+  const first = await original.api.submitRsvp(payload);
+  await original.api.signInAdmin({ email: 'owner@example.test', password: 'synthetic-test-password' });
+  const originalOperation = original.requests.find(request => request.path.endsWith('/submit_wedding_rsvp')).body;
+  assert.ok(original.local.getItem('wedding-rsvp-guest:' + identityHost));
+  assert.ok(original.session.getItem('wedding-rsvp-admin:' + identityHost));
+  const proxy = await fixture({ config: { ...directConfig, url: 'https://wedding-proxy.example.test', identityHost }, local: original.local, session: original.session });
+  const retried = await proxy.api.submitRsvp(payload);
+  assert.equal(retried.id, first.id);
+  assert.equal(proxy.requests.some(request => request.path === '/auth/v1/signup'), false, 'Proxy migration must not create another anonymous owner');
+  const proxyOperation = proxy.requests.find(request => request.path.endsWith('/submit_wedding_rsvp'));
+  assert.equal(proxyOperation.origin, 'https://wedding-proxy.example.test');
+  assert.equal(proxyOperation.headers.get('authorization'), 'Bearer ' + original.guest.access_token);
+  assert.equal(proxyOperation.body.p_submission_id, originalOperation.p_submission_id);
+  assert.equal(proxyOperation.body.p_operation_id, originalOperation.p_operation_id);
+  assert.equal(proxyOperation.body.p_client_version, originalOperation.p_client_version);
+  assert.equal((await proxy.api.getAdminSession()).user.id, original.owner.user.id);
+  await proxy.api.authorizeAdmin();
+  const authorization = proxy.requests.find(request => request.path.endsWith('/authorize_wedding_admin'));
+  assert.equal(authorization.origin, 'https://wedding-proxy.example.test');
+  assert.equal(authorization.headers.get('authorization'), 'Bearer ' + original.owner.access_token);
+  assert.equal(proxy.requests.some(request => request.path === '/auth/v1/token'), false, 'Existing administrator session should survive migration');
+  assert.equal([...proxy.local.values.keys()].some(key => key.includes('wedding-proxy.example.test')), false);
+  assert.equal([...proxy.session.values.keys()].some(key => key.includes('wedding-proxy.example.test')), false);
+  await proxy.api.signOutAdmin();
+});
+
+test('an explicitly malformed identityHost fails closed before any Auth or RPC request', async () => {
+  for (const identityHost of ['', null, 7, 'https://abcdefghijklmnopqrst.supabase.co', 'ABCDEFGHIJKLMNOPQRST.supabase.co', 'abcdefghijklmnopqrs.supabase.co', 'abcdefghijklmnopqrstu.supabase.co', 'abcdefghijklmnopqrst.supabase.co.evil.test', 'abcdefghijklmnopqrst.supabase.co ']) {
+    const { api, requests } = await fixture({ config: { provider: 'supabase', url: 'https://wedding-proxy.example.test', publishableKey: 'sb_publishable_test_only', identityHost } });
+    assert.deepEqual(api.getServiceStatus(), { configured: false });
+    await assert.rejects(api.submitRsvp({ name: '测试', people: 2, submissionId: randomUUID() }), { code: 'NOT_CONFIGURED' });
+    await assert.rejects(api.getAdminSession(), { code: 'NOT_CONFIGURED' });
+    assert.equal(requests.length, 0);
+  }
 });
 
 test('Realtime uses the owner token, invalidates on changes, and stops callbacks after close', async () => {

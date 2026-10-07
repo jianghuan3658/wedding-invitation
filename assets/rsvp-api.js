@@ -19,6 +19,7 @@ function isPublicKey(key) {
 }
 function validConfiguration(value) {
   if (value?.provider !== 'supabase' || !isPublicKey(value.publishableKey)) return false;
+  if (Object.prototype.hasOwnProperty.call(value, 'identityHost') && (typeof value.identityHost !== 'string' || !/^[a-z]{20}\.supabase\.co$/.test(value.identityHost))) return false;
   try {
     const url = new URL(value.url);
     return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash && Boolean(url.hostname);
@@ -91,7 +92,8 @@ function getClient(role) {
     const admin = role === 'admin';
     clientCache.set(role, createClient(config.url.replace(/\/+$/, ''), config.publishableKey, {
       auth: {
-        storageKey: `wedding-rsvp-${role}:${new URL(config.url).hostname}`,
+        // Keep existing Auth ownership when the same project moves behind a proxy.
+        storageKey: `wedding-rsvp-${role}:${config.identityHost ?? new URL(config.url).hostname}`,
         storage: sessionStorageAdapter(admin ? 'sessionStorage' : 'localStorage'),
         persistSession: true,
         autoRefreshToken: true,
