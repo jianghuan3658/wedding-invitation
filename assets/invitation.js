@@ -1,6 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const state = { wedding: null, albums: [], activeAlbum: null, albumTrigger: null, lightboxAlbum: null, photoIndex: 0, returnFocus: null, service: null, configured: false, submitting: false };
+const state = { wedding: null, albums: [], lightboxAlbum: null, photoIndex: 0, returnFocus: null, service: null, configured: false, submitting: false };
 const STORAGE_KEY = 'wedding-invitation:rsvp:v1';
 let saved = readSaved();
 
@@ -85,11 +85,11 @@ function renderAlbums(albums) {
     const shot = document.createElement('a');
     shot.className = 'feature-shot';
     shot.href = '#albums';
-    shot.setAttribute('aria-label', `查看${album.title}系列照片`);
+    shot.setAttribute('aria-label', `翻阅${album.title}系列照片`);
     const frame = text('div', 'feature-image', '');
     frame.append(image(album.cover, photoAlt(album, coverIndex(album))));
     const caption = text('div', 'feature-caption', '');
-    caption.append(text('span', '', album.title), text('span', '', '翻阅这一刻 ↗'));
+    caption.append(text('span', '', album.title), text('span', '', '翻阅这一刻'));
     shot.append(frame, caption);
     shot.addEventListener('click', (event) => { event.preventDefault(); openLightbox(album, coverIndex(album), shot); });
     featuredFrag.append(shot);
@@ -101,122 +101,305 @@ function renderAlbums(albums) {
     card.type = 'button';
     card.className = 'album-card';
     card.dataset.albumId = album.id;
-    card.setAttribute('aria-expanded', 'false');
-    card.setAttribute('aria-controls', 'album-detail');
-    card.setAttribute('aria-label', `展开${album.title}，共${album.photos.length}张照片`);
+    card.setAttribute('aria-haspopup', 'dialog');
+    card.setAttribute('aria-controls', 'lightbox');
+    card.setAttribute('aria-label', `翻阅${album.title}，共${album.photos.length}张照片`);
     const cover = text('div', 'album-cover', '');
-    cover.append(image(album.cover, photoAlt(album, coverIndex(album))), text('span', 'album-index', String(index + 1).padStart(2, '0')));
+    const coverPhoto = album.photos[coverIndex(album)];
+    cover.append(image(album.cover, photoAlt(album, coverIndex(album)), { width: coverPhoto.width, height: coverPhoto.height }));
     const label = text('div', 'album-label', '');
-    label.append(text('strong', '', album.title), text('small', '', `${album.photos.length} 张 ↗`));
+    label.append(text('span', 'album-index', String(index + 1).padStart(2, '0')), text('strong', '', album.title), text('small', '', `${album.photos.length} 张`));
     card.append(cover, label);
-    card.addEventListener('click', () => {
-      if (state.activeAlbum?.id === album.id) closeAlbum();
-      else selectAlbum(album, card);
-    });
+    card.addEventListener('click', () => openLightbox(album, coverIndex(album), card));
     cards.append(card);
   });
-  $('#album-grid').replaceChildren(cards);
+  albumRail.replaceChildren(cards);
   $('#gallery-status').hidden = true;
+  updateGalleryPosition();
 }
-function selectAlbum(album, trigger) {
-  state.activeAlbum = album;
-  state.albumTrigger = trigger;
-  document.querySelectorAll('.album-card').forEach((card) => { card.setAttribute('aria-expanded', String(card.dataset.albumId === album.id)); });
-  $('#active-album-title').textContent = album.title;
-  $('#active-album-count').textContent = `共 ${album.photos.length} 张 · 点开查看完整画面`;
-  const frag = document.createDocumentFragment();
-  album.photos.forEach((photo, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'photo-button';
-    button.setAttribute('aria-label', `放大查看${album.title}第${index + 1}张照片`);
-    button.append(image(photo.thumb, photoAlt(album, index), { width: photo.width, height: photo.height }), text('span', 'photo-number', String(index + 1).padStart(2, '0')));
-    button.addEventListener('click', () => openLightbox(album, index, button));
-    frag.append(button);
+
+const albumRail = $('#album-grid');
+let albumScrollFrame = 0;
+function updateGalleryPosition() {
+  const cards = [...albumRail.children];
+  if (!cards.length) {
+    $('#gallery-back').disabled = true;
+    $('#gallery-next').disabled = true;
+    return;
+  }
+  const left = albumRail.getBoundingClientRect().left;
+  const end = albumRail.scrollWidth - albumRail.clientWidth;
+  let nearest = 0;
+  let distance = Infinity;
+  cards.forEach((card, index) => {
+    const candidate = Math.abs(card.getBoundingClientRect().left - left);
+    if (candidate < distance) { nearest = index; distance = candidate; }
   });
-  $('#photo-grid').replaceChildren(frag);
-  $('#album-detail').hidden = false;
-  $('#active-album-title').focus({ preventScroll: true });
-  $('#album-detail').scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
+  const atStart = albumRail.scrollLeft <= 2;
+  const atEnd = albumRail.scrollLeft >= end - 2;
+  if (!atStart && atEnd) nearest = cards.length - 1;
+  $('#gallery-position').textContent = `${String(nearest + 1).padStart(2, '0')} / ${String(cards.length).padStart(2, '0')}`;
+  $('#gallery-back').disabled = atStart;
+  $('#gallery-next').disabled = atEnd;
 }
-function closeAlbum() {
-  $('#album-detail').hidden = true;
-  $('#photo-grid').replaceChildren();
-  document.querySelectorAll('.album-card').forEach((card) => { card.setAttribute('aria-expanded', 'false'); });
-  state.activeAlbum = null;
-  state.albumTrigger?.focus({ preventScroll: true });
-  state.albumTrigger?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+function moveGallery(direction) {
+  const first = albumRail.firstElementChild;
+  if (!first) return;
+  const gap = Number.parseFloat(getComputedStyle(albumRail).columnGap) || 0;
+  const amount = first.getBoundingClientRect().width + gap;
+  albumRail.scrollBy({ left: direction * amount, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
 }
-$('#close-album').addEventListener('click', closeAlbum);
+$('#gallery-back').addEventListener('click', () => moveGallery(-1));
+$('#gallery-next').addEventListener('click', () => moveGallery(1));
+albumRail.addEventListener('scroll', () => {
+  cancelAnimationFrame(albumScrollFrame);
+  albumScrollFrame = requestAnimationFrame(updateGalleryPosition);
+}, { passive: true });
 
 const lightbox = $('#lightbox');
-const lightboxImage = $('#lightbox-image');
+const lightboxRail = $('#lightbox-rail');
+const lightboxThumbs = $('#lightbox-thumbs');
+let viewerGeneration = 0;
+let viewerScrollFrame = 0;
+let viewerIdleTimer = null;
+let photoStatusTimer = null;
+let requestedPhotoIndex = null;
+let zoomed = false;
 function updateModalBody() { document.body.classList.toggle('modal-open', Boolean(document.querySelector('dialog[open]'))); }
-function openLightbox(album, index, trigger) {
-  state.lightboxAlbum = album;
+function activeSlide() { return lightboxRail.children[state.photoIndex]; }
+function activeImage() { return activeSlide()?.querySelector('img'); }
+function photoSourceSet(photo) { return `${photo.src.replace(/-1600\.[^.]+$/, '-960.webp')} 960w, ${photo.src} 1600w`; }
+function renderPhotoStatus() {
+  clearTimeout(photoStatusTimer);
+  const img = activeImage();
+  const status = $('#lightbox-status');
+  if (!lightbox.open || !img) { status.textContent = ''; return; }
+  if (img.dataset.loadState === 'error') {
+    status.textContent = '这张照片暂时未能载入，可以稍后重新打开此系列。';
+    return;
+  }
+  if (img.complete && img.naturalWidth > 0) { status.textContent = ''; return; }
+  status.textContent = '';
+  const generation = viewerGeneration;
+  photoStatusTimer = setTimeout(() => {
+    if (generation === viewerGeneration && lightbox.open && activeImage() === img && !(img.complete && img.naturalWidth > 0) && img.dataset.loadState !== 'error') status.textContent = '正在载入照片…';
+  }, 300);
+}
+function syncPhotoSelection(index, { revealThumb = true } = {}) {
+  const album = state.lightboxAlbum;
+  if (!album || !album.photos[index]) return;
+  if (state.photoIndex !== index) setZoom(false);
   state.photoIndex = index;
+  $('#lightbox-position').textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
+  [...lightboxRail.children].forEach((slide, slideIndex) => {
+    slide.classList.toggle('is-active', slideIndex === index);
+    const img = slide.querySelector('img');
+    img.tabIndex = slideIndex === index ? 0 : -1;
+  });
+  [...lightboxThumbs.children].forEach((thumb, thumbIndex) => {
+    thumb.setAttribute('aria-current', String(thumbIndex === index));
+  });
+  $('#lightbox-prev').disabled = zoomed || index === 0;
+  $('#lightbox-next').disabled = zoomed || index === album.photos.length - 1;
+  if (revealThumb) {
+    const thumb = lightboxThumbs.children[index];
+    const stripRect = lightboxThumbs.getBoundingClientRect();
+    const thumbRect = thumb.getBoundingClientRect();
+    if (thumbRect.left < stripRect.left || thumbRect.right > stripRect.right) {
+      lightboxThumbs.scrollTo({ left: thumbRect.left - stripRect.left + lightboxThumbs.scrollLeft - (lightboxThumbs.clientWidth - thumbRect.width) / 2, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    }
+  }
+  renderPhotoStatus();
+}
+function nearestPhotoIndex() {
+  const center = lightboxRail.getBoundingClientRect().left + lightboxRail.clientWidth / 2;
+  let nearest = 0;
+  let distance = Infinity;
+  [...lightboxRail.children].forEach((slide, index) => {
+    const rect = slide.getBoundingClientRect();
+    const candidate = Math.abs(rect.left + rect.width / 2 - center);
+    if (candidate < distance) { nearest = index; distance = candidate; }
+  });
+  return nearest;
+}
+function scrollToPhoto(index, animate = true) {
+  const slide = lightboxRail.children[index];
+  if (!slide || !lightbox.open) return;
+  requestedPhotoIndex = index;
+  syncPhotoSelection(index);
+  const targetLeft = slide.getBoundingClientRect().left - lightboxRail.getBoundingClientRect().left + lightboxRail.scrollLeft;
+  lightboxRail.scrollTo({ left: targetLeft, behavior: animate && !reducedMotion.matches ? 'smooth' : 'auto' });
+  clearTimeout(viewerIdleTimer);
+  viewerIdleTimer = setTimeout(() => {
+    if (!lightbox.open || zoomed) return;
+    requestedPhotoIndex = null;
+    syncPhotoSelection(nearestPhotoIndex());
+  }, animate && !reducedMotion.matches ? 500 : 60);
+}
+function openLightbox(album, index, trigger) {
+  clearTimeout(viewerIdleTimer);
+  clearTimeout(photoStatusTimer);
+  cancelAnimationFrame(viewerScrollFrame);
+  const generation = ++viewerGeneration;
+  state.lightboxAlbum = album;
+  state.photoIndex = Math.max(0, Math.min(index, album.photos.length - 1));
   state.returnFocus = trigger;
-  renderLightbox();
+  zoomed = false;
+  requestedPhotoIndex = state.photoIndex;
+  lightbox.classList.remove('is-zoomed');
+  $('#lightbox-title').textContent = album.title;
+  $('#lightbox-counter').textContent = `${album.photos.length} 帧关于我们的记忆`;
+  $('#lightbox-zoom').textContent = '查看细节';
+  $('#lightbox-zoom').setAttribute('aria-pressed', 'false');
+  $('#lightbox-status').textContent = '';
+  const slides = document.createDocumentFragment();
+  const thumbs = document.createDocumentFragment();
+  album.photos.forEach((photo, photoIndex) => {
+    const slide = text('div', 'photo-slide', '');
+    slide.setAttribute('role', 'group');
+    slide.setAttribute('aria-label', `${photoIndex + 1} / ${album.photos.length}`);
+    slide.style.setProperty('--detail-width', `${Math.min(photo.width, 1600)}px`);
+    const figure = document.createElement('figure');
+    const img = image(photo.src, photoAlt(album, photoIndex), { lazy: photoIndex !== state.photoIndex, width: photo.width, height: photo.height });
+    img.className = 'lightbox-image';
+    img.srcset = photoSourceSet(photo);
+    img.sizes = '(max-width: 760px) 94vw, 86vw';
+    img.dataset.loadState = 'loading';
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', `${photoAlt(album, photoIndex)}，查看细节`);
+    img.setAttribute('aria-expanded', 'false');
+    img.addEventListener('load', () => {
+      img.dataset.loadState = 'loaded';
+      if (generation === viewerGeneration && lightbox.open && activeImage() === img) renderPhotoStatus();
+    });
+    img.addEventListener('error', () => {
+      img.dataset.loadState = 'error';
+      if (generation === viewerGeneration && lightbox.open && activeImage() === img) renderPhotoStatus();
+    });
+    img.addEventListener('click', () => {
+      if (state.photoIndex !== photoIndex) syncPhotoSelection(photoIndex);
+      setZoom(!zoomed);
+    });
+    img.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setZoom(!zoomed); }
+    });
+    figure.append(img, text('figcaption', '', `${album.title} · ${String(photoIndex + 1).padStart(2, '0')}`));
+    slide.append(figure);
+    slides.append(slide);
+    const thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.className = 'lightbox-thumb';
+    thumb.setAttribute('aria-label', `查看${album.title}第${photoIndex + 1}张照片`);
+    thumb.setAttribute('aria-current', String(photoIndex === state.photoIndex));
+    thumb.append(image(photo.thumb, '', { width: photo.width, height: photo.height }));
+    thumb.addEventListener('click', () => { setZoom(false); scrollToPhoto(photoIndex); });
+    thumbs.append(thumb);
+  });
+  lightboxRail.replaceChildren(slides);
+  lightboxThumbs.replaceChildren(thumbs);
   if (!lightbox.open) lightbox.showModal();
   updateModalBody();
   $('#lightbox-close').focus({ preventScroll: true });
+  syncPhotoSelection(state.photoIndex, { revealThumb: false });
+  requestAnimationFrame(() => {
+    if (generation !== viewerGeneration || !lightbox.open) return;
+    scrollToPhoto(state.photoIndex, false);
+  });
 }
-function setZoom(zoom) {
-  lightboxImage.classList.toggle('zoomed', zoom);
-  lightboxImage.parentElement.classList.toggle('zoomed', zoom);
-  lightboxImage.setAttribute('aria-expanded', String(zoom));
-  lightboxImage.setAttribute('aria-label', zoom ? '缩小照片' : '放大照片');
-}
-function renderLightbox() {
-  const album = state.lightboxAlbum;
-  const photo = album.photos[state.photoIndex];
-  setZoom(false);
-  $('#lightbox-title').textContent = album.title;
-  $('#lightbox-counter').textContent = `${state.photoIndex + 1} / ${album.photos.length}`;
-  $('#lightbox-caption').textContent = `${album.title} · ${String(state.photoIndex + 1).padStart(2, '0')}`;
-  $('#lightbox-status').textContent = '正在载入照片…';
-  lightboxImage.alt = photoAlt(album, state.photoIndex);
-  lightboxImage.width = photo.width;
-  lightboxImage.height = photo.height;
-  lightboxImage.src = photo.src;
-  $('#lightbox-prev').disabled = state.photoIndex === 0;
-  $('#lightbox-next').disabled = state.photoIndex === album.photos.length - 1;
+function setZoom(value) {
+  const slide = activeSlide();
+  if (!slide) return;
+  zoomed = value;
+  lightbox.classList.toggle('is-zoomed', value);
+  [...lightboxRail.children].forEach((item) => {
+    const active = item === slide && value;
+    item.classList.toggle('is-zoomed', active);
+    const img = item.querySelector('img');
+    img.setAttribute('aria-expanded', String(active));
+    img.setAttribute('aria-label', `${img.alt}，${active ? '恢复完整画面' : '查看细节'}`);
+    if (!active) item.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+  });
+  $('#lightbox-zoom').setAttribute('aria-pressed', String(value));
+  $('#lightbox-zoom').textContent = value ? '完整画面' : '查看细节';
+  $('#lightbox-prev').disabled = value || state.photoIndex === 0;
+  $('#lightbox-next').disabled = value || state.photoIndex === state.lightboxAlbum.photos.length - 1;
+  if (value) {
+    const img = slide.querySelector('img');
+    img.srcset = '';
+    img.src = state.lightboxAlbum.photos[state.photoIndex].src;
+    requestedPhotoIndex = null;
+    clearTimeout(viewerIdleTimer);
+    const generation = viewerGeneration;
+    requestAnimationFrame(() => {
+      if (generation !== viewerGeneration || !zoomed || activeSlide() !== slide) return;
+      slide.scrollTo({ left: Math.max(0, (slide.scrollWidth - slide.clientWidth) / 2), top: Math.max(0, (slide.scrollHeight - slide.clientHeight) / 2), behavior: 'auto' });
+    });
+  } else {
+    const img = slide.querySelector('img');
+    img.srcset = photoSourceSet(state.lightboxAlbum.photos[state.photoIndex]);
+  }
+  renderPhotoStatus();
 }
 function movePhoto(step) {
-  if (!state.lightboxAlbum) return;
+  if (!state.lightboxAlbum || zoomed) return;
   const next = state.photoIndex + step;
   if (next < 0 || next >= state.lightboxAlbum.photos.length) return;
-  state.photoIndex = next;
-  renderLightbox();
+  scrollToPhoto(next);
 }
-lightboxImage.addEventListener('load', () => { $('#lightbox-status').textContent = ''; });
-lightboxImage.addEventListener('error', () => { $('#lightbox-status').textContent = '这张照片暂时未能载入，请切换照片后重试。'; });
-lightboxImage.tabIndex = 0;
-lightboxImage.setAttribute('role', 'button');
-lightboxImage.addEventListener('click', () => setZoom(!lightboxImage.classList.contains('zoomed')));
-lightboxImage.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setZoom(!lightboxImage.classList.contains('zoomed')); }
-});
 $('#lightbox-prev').addEventListener('click', () => movePhoto(-1));
 $('#lightbox-next').addEventListener('click', () => movePhoto(1));
+$('#lightbox-zoom').addEventListener('click', () => setZoom(!zoomed));
 $('#lightbox-close').addEventListener('click', () => lightbox.close());
-lightbox.addEventListener('close', () => { setZoom(false); updateModalBody(); state.returnFocus?.focus({ preventScroll: true }); });
-lightbox.addEventListener('keydown', (event) => {
-  if (event.key === 'ArrowLeft') { event.preventDefault(); movePhoto(-1); }
-  if (event.key === 'ArrowRight') { event.preventDefault(); movePhoto(1); }
+lightbox.addEventListener('close', () => {
+  ++viewerGeneration;
+  clearTimeout(viewerIdleTimer);
+  clearTimeout(photoStatusTimer);
+  cancelAnimationFrame(viewerScrollFrame);
+  zoomed = false;
+  requestedPhotoIndex = null;
+  lightbox.classList.remove('is-zoomed');
+  lightboxRail.replaceChildren();
+  lightboxThumbs.replaceChildren();
+  $('#lightbox-status').textContent = '';
+  state.lightboxAlbum = null;
+  updateModalBody();
+  state.returnFocus?.focus({ preventScroll: true });
 });
-let touchStart = null;
-$('#lightbox-stage').addEventListener('touchstart', (event) => {
-  if (event.touches.length !== 1 || lightboxImage.classList.contains('zoomed') || event.target.closest('button')) { touchStart = null; return; }
-  touchStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+lightbox.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowLeft' && !zoomed) { event.preventDefault(); movePhoto(-1); }
+  if (event.key === 'ArrowRight' && !zoomed) { event.preventDefault(); movePhoto(1); }
+});
+lightboxRail.addEventListener('scroll', () => {
+  if (!lightbox.open || zoomed) return;
+  const generation = viewerGeneration;
+  cancelAnimationFrame(viewerScrollFrame);
+  viewerScrollFrame = requestAnimationFrame(() => {
+    if (generation !== viewerGeneration || !lightbox.open || zoomed) return;
+    if (requestedPhotoIndex === null) syncPhotoSelection(nearestPhotoIndex());
+  });
+  clearTimeout(viewerIdleTimer);
+  viewerIdleTimer = setTimeout(() => {
+    if (generation !== viewerGeneration || !lightbox.open || zoomed) return;
+    requestedPhotoIndex = null;
+    syncPhotoSelection(nearestPhotoIndex());
+  }, 140);
 }, { passive: true });
-$('#lightbox-stage').addEventListener('touchend', (event) => {
-  if (!touchStart || event.changedTouches.length !== 1) return;
-  const dx = event.changedTouches[0].clientX - touchStart.x;
-  const dy = event.changedTouches[0].clientY - touchStart.y;
-  touchStart = null;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) movePhoto(dx < 0 ? 1 : -1);
-}, { passive: true });
+function beginNativeBrowse() { if (!zoomed) requestedPhotoIndex = null; }
+lightboxRail.addEventListener('pointerdown', beginNativeBrowse, { passive: true });
+lightboxRail.addEventListener('touchstart', beginNativeBrowse, { passive: true });
+lightboxRail.addEventListener('wheel', beginNativeBrowse, { passive: true });
+if (typeof ResizeObserver === 'function') {
+  let previousRailWidth = -1;
+  const galleryResize = new ResizeObserver(() => {
+    updateGalleryPosition();
+    const width = lightboxRail.clientWidth;
+    if (width === previousRailWidth) return;
+    previousRailWidth = width;
+    if (lightbox.open && !zoomed) scrollToPhoto(state.photoIndex, false);
+  });
+  galleryResize.observe(albumRail);
+  galleryResize.observe(lightboxRail);
+}
 
 const audio = $('#wedding-music');
 const musicGate = $('#music-gate');

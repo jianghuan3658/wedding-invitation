@@ -7,7 +7,8 @@
   <meta name="description" content="蒋欢与江婕的新婚晚宴邀请。2026年11月7日17:18，杭州临安，诚邀你与我们分享新婚的喜悦。">
   <title>蒋欢 & 江婕 · 新婚晚宴邀请</title>
   <link rel="stylesheet" href="assets/invitation.css">
-  <script type="module" src="assets/invitation.js"></script>
+  <link rel="stylesheet" href="assets/gallery.css?v=2">
+  <script type="module" src="assets/invitation.js?v=2"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到请帖正文</a>
@@ -26,7 +27,7 @@
         <p class="hero-date" data-date-short>2026 . 11 . 07</p>
         <p class="hero-time"><span data-time>17:18</span> <span class="thin-separator">/</span> 新婚晚宴 <span class="thin-separator">/</span> 杭州 · 临安</p>
         <p class="hero-message">人生的下一程，<br>想与你一同开启。</p>
-        <a class="text-link" href="#invitation">阅读这封邀请 <span aria-hidden="true">↓</span></a>
+        <a class="text-link" href="#invitation">阅读这封邀请 <svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12m-5-5 5 5 5-5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </div>
     </section>
     <section class="invitation section-wrap" id="invitation" aria-labelledby="invitation-title">
@@ -34,7 +35,7 @@
       <h2 id="invitation-title">邀你共赴这一刻</h2>
       <p class="invitation-message">在这个特别的日子，<br>我们诚挚邀请你与我们共聚，<br>一同分享新婚的喜悦。</p>
       <div class="invitation-signature"><span data-groom>蒋欢</span><span aria-hidden="true"> & </span><span data-bride>江婕</span><small>敬邀</small></div>
-      <a class="button button-wine" href="#rsvp">填写赴宴回执 <span aria-hidden="true">↗</span></a>
+      <a class="button button-wine" href="#rsvp">填写赴宴回执 <svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </section>
     <section class="moments section-wrap" aria-labelledby="moments-title">
       <div class="section-heading"><div><div class="section-kicker"><span>02</span><span>OUR MOMENTS</span></div><h2 id="moments-title">光影之间，都是我们</h2></div><p>把不同模样的我们，<br>收进这一册。</p></div>
@@ -42,16 +43,13 @@
     </section>
     <section class="albums section-wrap" id="albums" aria-labelledby="albums-title">
       <div class="section-heading"><div><div class="section-kicker"><span>03</span><span>THE WEDDING ALBUM</span></div><h2 id="albums-title">我们的婚礼画册</h2></div><p id="album-summary">十二个系列，记录我们的不同模样。</p></div>
-      <p class="gallery-hint">选择一个系列，展开其中的照片。点开照片，可以左右翻阅。</p>
-      <div class="album-grid" id="album-grid"></div>
+      <p class="gallery-hint">左右轻翻，收藏我们的不同模样。</p>
+      <div class="album-grid" id="album-grid" aria-label="婚纱照系列"></div>
+      <div class="gallery-navigation"><button id="gallery-back" type="button" aria-label="查看上一组婚纱照系列"><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16 10H4m5-5-5 5 5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg><span>上一组</span></button><span id="gallery-position" aria-live="polite">01 / 12</span><button id="gallery-next" type="button" aria-label="查看下一组婚纱照系列"><span>下一组</span><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <p class="gallery-status" id="gallery-status" role="status">画册正在展开……</p>
-      <div class="album-detail" id="album-detail" hidden aria-labelledby="active-album-title">
-        <div class="album-detail-heading"><div><p class="eyebrow">EXPLORE THE COLLECTION</p><h3 id="active-album-title" tabindex="-1"></h3><p id="active-album-count"></p></div><button class="text-link close-album" id="close-album" type="button">收起系列 <span aria-hidden="true">↑</span></button></div>
-        <div class="photo-grid" id="photo-grid"></div>
-      </div>
     </section>
     <section class="event-band" id="venue" aria-labelledby="venue-title">
-      <div class="event-inner section-wrap"><div class="event-intro"><div class="section-kicker"><span>04</span><span>THE CELEBRATION</span></div><h2 id="venue-title">相聚在，<br>这个好日子。</h2><p>恭候你的到来。</p></div><div class="event-details"><dl><div><dt>新婚晚宴</dt><dd><span class="event-date" data-date-long>2026 年 11 月 7 日</span><span class="event-time"><span data-time>17:18</span> 开席</span></dd></div><div><dt>相聚地点</dt><dd class="event-address" data-address>浙江省杭州市临安区<br>太湖源镇界牌头29号</dd></div></dl><a class="button button-paper" id="map-link" href="https://uri.amap.com/search?keyword=%E6%B5%99%E6%B1%9F%E7%9C%81%E6%9D%AD%E5%B7%9E%E5%B8%82%E4%B8%B4%E5%AE%89%E5%8C%BA%E5%A4%AA%E6%B9%96%E6%BA%90%E9%95%87%E7%95%8C%E7%89%8C%E5%A4%B429%E5%8F%B7&city=%E6%9D%AD%E5%B7%9E%E5%B8%82&view=map&callnative=0" target="_blank" rel="noopener noreferrer">在高德地图查看 <span aria-hidden="true">↗</span></a><p class="map-note">地图将搜索上述地址，请核对目的地后再导航。</p></div></div>
+      <div class="event-inner section-wrap"><div class="event-intro"><div class="section-kicker"><span>04</span><span>THE CELEBRATION</span></div><h2 id="venue-title">相聚在，<br>这个好日子。</h2><p>恭候你的到来。</p></div><div class="event-details"><dl><div><dt>新婚晚宴</dt><dd><span class="event-date" data-date-long>2026 年 11 月 7 日</span><span class="event-time"><span data-time>17:18</span> 开席</span></dd></div><div><dt>相聚地点</dt><dd class="event-address" data-address>浙江省杭州市临安区<br>太湖源镇界牌头29号</dd></div></dl><a class="button button-paper" id="map-link" href="https://uri.amap.com/search?keyword=%E6%B5%99%E6%B1%9F%E7%9C%81%E6%9D%AD%E5%B7%9E%E5%B8%82%E4%B8%B4%E5%AE%89%E5%8C%BA%E5%A4%AA%E6%B9%96%E6%BA%90%E9%95%87%E7%95%8C%E7%89%8C%E5%A4%B429%E5%8F%B7&city=%E6%9D%AD%E5%B7%9E%E5%B8%82&view=map&callnative=0" target="_blank" rel="noopener noreferrer">在高德地图查看 <svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></a><p class="map-note">地图将搜索上述地址，请核对目的地后再导航。</p></div></div>
     </section>
     <section class="rsvp section-wrap" id="rsvp" aria-labelledby="rsvp-title">
       <div class="rsvp-intro"><div class="section-kicker"><span>05</span><span>KINDLY REPLY</span></div><h2 id="rsvp-title">期待与你相聚</h2><p>留下你的姓名和用餐人数，<br>让我们为这份相聚做好准备。</p><p class="privacy-note">回执仅用于安排婚宴，<br>你的姓名与人数不会向其他宾客展示。</p></div>
@@ -61,16 +59,25 @@
         <form id="rsvp-form" novalidate>
           <div class="form-field"><label for="guest-name">你的姓名</label><input id="guest-name" name="name" type="text" maxlength="40" autocomplete="name" placeholder="怎么称呼你" required aria-describedby="name-error"><span class="field-error" id="name-error"></span></div>
           <div class="form-field"><label for="guest-people">用餐人数 <span>（含本人）</span></label><div class="people-field"><input id="guest-people" name="people" type="number" min="1" max="20" step="1" value="1" inputmode="numeric" required aria-describedby="people-help people-error"><span aria-hidden="true">位</span></div><small id="people-help">请填本次一起赴宴的总人数，包含你自己。</small><span class="field-error" id="people-error"></span></div>
-          <button class="button button-wine submit-rsvp" id="submit-rsvp" type="submit" disabled><span id="submit-label">提交赴宴回执</span><span aria-hidden="true">↗</span></button>
+          <button class="button button-wine submit-rsvp" id="submit-rsvp" type="submit" disabled><span id="submit-label">提交赴宴回执</span><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <p class="form-feedback" id="form-feedback" aria-live="polite" aria-atomic="true"></p>
         </form>
       </div>
     </section>
     <footer class="footer section-wrap"><div class="footer-names"><span data-groom>蒋欢</span><span class="footer-amp">&</span><span data-bride>江婕</span></div><p>与你分享喜悦，是这个日子里最美好的事。</p><span class="eyebrow" data-date-short>2026 . 11 . 07</span></footer>
   </main>
-  <a class="sticky-rsvp" href="#rsvp"><span>赴宴回执</span><span aria-hidden="true">↗</span></a>
-  <dialog class="lightbox" id="lightbox" aria-labelledby="lightbox-title"><div class="lightbox-top"><div><h2 id="lightbox-title"></h2><p id="lightbox-counter" aria-live="polite"></p></div><button class="lightbox-close" id="lightbox-close" type="button" aria-label="关闭照片">关闭 <span aria-hidden="true">×</span></button></div><div class="lightbox-stage" id="lightbox-stage"><button class="lightbox-arrow lightbox-prev" id="lightbox-prev" type="button" aria-label="上一张照片">‹</button><figure><img id="lightbox-image" alt=""><figcaption id="lightbox-caption"></figcaption></figure><button class="lightbox-arrow lightbox-next" id="lightbox-next" type="button" aria-label="下一张照片">›</button></div><p class="lightbox-hint">左右滑动翻阅 · 点击图片可放大</p><p class="lightbox-status" id="lightbox-status" role="status"></p></dialog>
-  <dialog class="music-gate" id="music-gate" aria-labelledby="music-gate-title"><div class="gate-inner"><p class="eyebrow">A LITTLE INVITATION</p><div class="gate-monogram" aria-hidden="true">囍</div><h2 id="music-gate-title">一封邀请，<br>一点心意。</h2><p>蒋欢 & 江婕<br><span data-date-short>2026 . 11 . 07</span></p><button class="button button-wine" id="open-invitation" type="button">开启请帖 · 播放音乐 <span aria-hidden="true">↗</span></button><button class="gate-skip" id="skip-music" type="button">暂不播放，直接阅读</button></div></dialog>
+  <a class="sticky-rsvp" href="#rsvp"><span>赴宴回执</span><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  <dialog class="lightbox" id="lightbox" aria-labelledby="lightbox-title">
+    <div class="lightbox-top"><div><p class="eyebrow">OUR WEDDING COLLECTION</p><h2 id="lightbox-title"></h2><p id="lightbox-counter"></p></div><button class="lightbox-close" id="lightbox-close" type="button" aria-label="关闭画册">关闭</button></div>
+    <div class="lightbox-rail" id="lightbox-rail" aria-label="系列照片"></div>
+    <div class="lightbox-bottom">
+      <div class="lightbox-thumbs" id="lightbox-thumbs" aria-label="选择照片"></div>
+      <div class="lightbox-controls"><button id="lightbox-prev" type="button" aria-label="上一张照片"><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16 10H4m5-5-5 5 5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg><span>上一张</span></button><span id="lightbox-position" aria-live="polite"></span><button id="lightbox-next" type="button" aria-label="下一张照片"><span>下一张</span><svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="lightbox-zoom" type="button" aria-pressed="false">查看细节</button></div>
+      <p class="lightbox-hint">左右轻翻</p>
+    </div>
+    <p class="lightbox-status" id="lightbox-status" role="status"></p>
+  </dialog>
+  <dialog class="music-gate" id="music-gate" aria-labelledby="music-gate-title"><div class="gate-inner"><p class="eyebrow">A LITTLE INVITATION</p><div class="gate-monogram" aria-hidden="true">囍</div><h2 id="music-gate-title">一封邀请，<br>一点心意。</h2><p>蒋欢 & 江婕<br><span data-date-short>2026 . 11 . 07</span></p><button class="button button-wine" id="open-invitation" type="button">开启请帖 · 播放音乐 <svg class="icon-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="gate-skip" id="skip-music" type="button">暂不播放，直接阅读</button></div></dialog>
   <audio id="wedding-music" preload="none" loop></audio>
   <noscript><p class="noscript-note">请开启浏览器 JavaScript，以查看婚纱相册和填写赴宴回执。</p></noscript>
 </body>
