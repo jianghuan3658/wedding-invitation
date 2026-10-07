@@ -215,3 +215,21 @@ test('logout while history restoration awaits authorization cannot restart synci
   assert.equal(view.intervals.size, 0); assert.equal(view.watches.filter(watch => !watch.closed).length, 0);
   assert.equal(view.node('sync-status').textContent, '已退出登录');
 });
+
+test('search before the first successful read cannot turn unknown attendance into zero', async () => {
+  let fail = true;
+  const view = await fixture({ list: async () => {
+    if (fail) throw new Error('synthetic initial outage');
+    return { rows: [row(1, { name: '目标宾客', people: 6 })], nextCursor: null };
+  } });
+  await view.login();
+  view.node('search').value = '目标'; await view.node('search').emit('input');
+  assert.equal(view.node('search').value, '目标');
+  for (const id of ['people-total', 'groups-total', 'duplicate-total', 'last-update']) assert.equal(view.node(id).textContent, '—');
+  assert.equal(view.node('export').disabled, true); assert.equal(view.node('guest-rows').children.length, 0);
+  assert.equal(view.node('sync-status').dataset.tone, 'error');
+  assert.match(view.node('empty-state').textContent, /尚未|还未|等待|正在读取/);
+  fail = false; await view.poll();
+  assert.equal(view.node('people-total').textContent, '6'); assert.equal(view.node('groups-total').textContent, '1');
+  assert.equal(view.node('guest-rows').children.length, 1); assert.equal(view.node('search').value, '目标');
+});

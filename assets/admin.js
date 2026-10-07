@@ -13,17 +13,22 @@ let syncGeneration = 0;
 let resumeAfterHistory = false;
 function status(text, tone = '') { $('sync-status').textContent = text; $('sync-status').dataset.tone = tone; }
 function formatTime(time) { return time ? new Date(time).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '—'; }
-function clearDashboard() {
+function clearDashboard(resetSearch = true) {
   rows = []; lastSuccess = null;
   $('guest-rows').replaceChildren();
   for (const id of ['groups-total', 'people-total', 'duplicate-total', 'last-update']) $(id).textContent = '—';
-  $('search').value = '';
+  if (resetSearch) $('search').value = '';
   $('list-description').textContent = '等待读取报名';
   $('empty-state').hidden = false;
   $('empty-state').textContent = '正在读取已经保存的报名。';
   $('export').disabled = true;
 }
 function render() {
+  if (!lastSuccess) {
+    clearDashboard(false);
+    $('empty-state').textContent = '尚未读取到报名，请稍后重试。';
+    return;
+  }
   $('groups-total').textContent = rows.length.toLocaleString('zh-CN');
   $('people-total').textContent = rows.reduce((sum, row) => sum + row.people, 0).toLocaleString('zh-CN');
   const names = new Map();

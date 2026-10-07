@@ -15,6 +15,34 @@
 
 当前 Supabase 新表需要显式 Data API 权限；此文件已经包含必要的 `GRANT`。Realtime publication 也已经配置。管理员的 SELECT RLS 策略同时决定是否能收到变更事件。
 
+## 本地部署辅助脚本
+
+`deploy.mjs` 使用官方 Management API 和 Auth Admin API，只有 `list`、`prepare`、`deploy` 三步。Node.js 20+ 即可，无需安装运行依赖。`prepare` / `deploy` 默认离线 dry-run：不会读取凭据、联网、生成密码或修改文件；只有明确添加 `--apply` 才实际执行。`list` 是实际只读 API 调用。
+
+```sh
+# 无凭据也能查看具体执行计划。
+node backend/supabase/deploy.mjs prepare --org FREE_ORG_SLUG --name wedding-rsvp --create
+node backend/supabase/deploy.mjs deploy --org FREE_ORG_SLUG --admin-email YOUR_ADMIN_EMAIL
+
+# 以下动作须在真实平台登录和本次任务授权已经成立后执行。
+node backend/supabase/deploy.mjs list --token-file /ABSOLUTE/PATH/TO/PROTECTED_TOKEN_FILE
+node backend/supabase/deploy.mjs prepare --org FREE_ORG_SLUG --name wedding-rsvp --create --apply --token-file /ABSOLUTE/PATH/TO/PROTECTED_TOKEN_FILE
+node backend/supabase/deploy.mjs deploy --org FREE_ORG_SLUG --admin-email YOUR_ADMIN_EMAIL --apply --token-file /ABSOLUTE/PATH/TO/PROTECTED_TOKEN_FILE
+
+# 完全本地的 mock API 检查，不访问真实云资源。
+node --test backend/supabase/deploy.test.mjs
+```
+
+管理 token 只能通过 `SUPABASE_ACCESS_TOKEN` 环境变量或当前用户拥有的 0600 凭据文件读取，不能把 token/密码值放在 CLI 参数、公开文件或工具输出。文件可为纯 token，或包含 `access_token` / `SUPABASE_ACCESS_TOKEN` / `token` 字段的 JSON。脚本不会显示原始 provider 响应或异常堆栈。
+
+`prepare --create --apply` 先核实指定组织的 `plan` 明确为 `free`，检查项目列表与新加坡可用性，再创建一个最小默认规格项目。脚本不创建/升级组织，不改套餐，不删除资源，不自动采用名称相同但没有本地创建凭证的未知项目。项目刚创建时可能尚未 `ACTIVE_HEALTHY`，稍后检查状态再执行 deploy；脚本不会在后台持续等待。
+
+创建意图、数据库密码、项目 ref 和生成的专用管理员密码只保存在被此目录 `.gitignore` 忽略的 `local-secrets/deployment.json`（目录 0700、文件 0600）；管理 token 不会复制进去。创建请求结果未知时，下一次 prepare 只列举和核对符合原意图的项目，不能自动重建。管理员创建结果未知时，下一次 deploy 核对对应邮箱并验证原先保存的密码，不会创建第二个账号或重置未知账号密码。
+
+deploy 只处理此脚本已创建且仍属于相同 Free 组织、新加坡区的项目，拒绝无关 public/private 表及未登记的管理员设置；完整 schema 成功后启用匿名 Auth，将新匿名账号的 IP 小时限额设为 300，创建命令明确指定的永久管理员，并绑定私有 UID。最后生成 `data/backend.json`，仅含项目 URL、公钥和公开的 provider/轮询设置。已指向其他项目的公开配置不会被覆盖。密码供用户通过受保护本地文件私密查看，脚本不会自动发消息或打印密码。
+
+脚本输出“deployed”只说明上述 API 配置步骤完成，不能代替实际提交、私密管理员登录、Realtime 和国内网络验收。缺少平台授权时保持公开配置为空，不应宣称线上回执可用。
+
 ## RPC 契约
 
 所有 RPC 返回一个 JSON 对象，不返回数组。SQL 自定义错误的 `message` 是稳定代码，前端将其映射为中文提示，不能直接展示原始数据库错误。
@@ -70,3 +98,4 @@ Supabase 匿名注册另有平台 IP 限流，当前默认每 IP 每小时 30 �
 - [Realtime 排查](https://supabase.com/docs/guides/troubleshooting/realtime-postgres-changes-troubleshooting)：publication 与 SELECT RLS 均决定事件可见性。
 - [API keys](https://supabase.com/docs/guides/getting-started/api-keys)：浏览器公钥与服务端密钥的边界。
 - [Free 计费](https://supabase.com/docs/guides/platform/billing-on-supabase)和[暂停规则](https://supabase.com/docs/guides/platform/free-project-pausing)：免费额度与维护限制。
+- [组织信息](https://supabase.com/docs/reference/api/v1-get-an-organization)、[创建项目](https://supabase.com/docs/reference/api/v1-create-a-project)、[Auth 配置](https://supabase.com/docs/reference/api/v1-update-auth-service-config)、[项目 API keys](https://supabase.com/docs/reference/api/v1-get-project-api-keys)、[创建管理员](https://supabase.com/docs/reference/javascript/auth-admin-createuser)：部署脚本所用的官方接口。当前匿名 Auth 字段以 [官方 OpenAPI](https://github.com/supabase/supabase/blob/master/apps/docs/spec/api_v1_openapi.json) 的 `external_anonymous_users_enabled` 和 `rate_limit_anonymous_users` 为准。

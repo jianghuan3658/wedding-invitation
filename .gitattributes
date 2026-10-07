@@ -1,0 +1,2 @@
+# Preserve upstream SDK template strings and bundled license formatting.
+assets/vendor/* whitespace=-trailing-space,-blank-at-eof
