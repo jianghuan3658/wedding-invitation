@@ -1,0 +1,22 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { pathToFileURL } = require('node:url');
+const path = require('node:path');
+test('unconfigured frontend rejects submission and administrator page shows no invented totals', async () => {
+  const elements = new Map();
+  global.document = { hidden: false, getElementById(id) { if (!elements.has(id)) elements.set(id, { hidden: false, textContent: '', value: '', dataset: {}, addEventListener() {} }); return elements.get(id); }, addEventListener() {} };
+  global.window = { addEventListener() {} };
+  global.fetch = async () => ({ ok: true, json: async () => ({ provider: 'cloudbase', env: '', adminUid: '', region: 'ap-shanghai', functionName: 'wedding-rsvp' }) });
+  const api = await import(pathToFileURL(path.resolve(__dirname, '../../assets/rsvp-api.js')).href);
+  assert.deepEqual(api.getServiceStatus(), { configured: false });
+  await assert.rejects(api.submitRsvp({ name: '测试', people: 2, submissionId: 'any' }), { code: 'NOT_CONFIGURED' });
+  const admin = await import(pathToFileURL(path.resolve(__dirname, '../../assets/admin.js')).href);
+  assert.equal(elements.get('unconfigured').hidden, false);
+  assert.equal(elements.get('login-panel').hidden, true);
+  assert.ok(elements.get('sync-status').textContent.includes('没有连接云端数据库'));
+  assert.equal(elements.has('people-total'), false);
+  for (const cell of ['=SUM(1,2)', '+1', '-2', '@SUM(A1)', '  =1+1', '\t危险']) assert.match(admin.csvCell(cell), /^"'/);
+  assert.equal(admin.csvCell('蒋欢'), '"蒋欢"');
+  assert.equal(admin.csvCell('名字"逗号,'), '"名字""逗号,"');
+});

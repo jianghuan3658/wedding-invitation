@@ -1,0 +1,4 @@
+{
+  "*": { "invoke": false },
+  "wedding-rsvp": { "invoke": "auth != null" }
+}

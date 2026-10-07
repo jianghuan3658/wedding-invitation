@@ -1,0 +1,13 @@
+{
+  "envId": "",
+  "functionRoot": "./functions",
+  "functions": [{
+    "name": "wedding-rsvp",
+    "runtime": "Nodejs20.19",
+    "handler": "index.main",
+    "timeout": 10,
+    "memorySize": 256,
+    "installDependency": true,
+    "envVariables": { "ADMIN_UID": "" }
+  }]
+}

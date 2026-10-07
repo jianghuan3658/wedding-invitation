@@ -1,0 +1,5 @@
+{
+  "wedding_rsvps": { "read": "auth != null && auth.uid == '__ADMIN_UID__' && auth.loginType != 'ANONYMOUS'", "write": false },
+  "wedding_rsvp_receipts": { "read": false, "write": false },
+  "wedding_rsvp_limits": { "read": false, "write": false }
+}

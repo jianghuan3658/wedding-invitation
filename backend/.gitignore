@@ -1,0 +1,5 @@
+node_modules/
+tools/sdk-inspect/
+tools/*.tgz
+cloudbaserc.local.json
+*.local.json

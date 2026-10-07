@@ -1,0 +1,10 @@
+{
+  "name": "wedding-invitation-backend-tools",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "vendor-sdk": "esbuild tools/browser-sdk-entry.js --bundle --format=esm --platform=browser --target=es2020 --minify --legal-comments=linked --outfile=../assets/vendor/cloudbase-browser.js"
+  },
+  "devDependencies": { "@cloudbase/js-sdk": "3.10.1", "esbuild": "0.25.10" }
+}

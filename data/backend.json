@@ -1,0 +1,9 @@
+{
+  "provider": "cloudbase",
+  "env": "",
+  "region": "ap-shanghai",
+  "functionName": "wedding-rsvp",
+  "collection": "wedding_rsvps",
+  "adminUid": "",
+  "pollIntervalMs": 5000
+}

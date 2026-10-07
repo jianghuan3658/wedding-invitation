@@ -1,16 +1,39 @@
-# 电子婚礼请帖样例
+# 蒋欢与江婕的新婚晚宴请帖
 
-用于预览的静态婚礼请帖。姓名、日期和场地均为样例信息。
+请帖：[打开请帖](https://jianghuan3658.github.io/wedding-invitation/)
 
-网站：https://jianghuan3658.github.io/wedding-invitation/
+管理：[报名管理页](https://jianghuan3658.github.io/wedding-invitation/admin.html)
 
-## 更新方式
+采用奶油白、酒红点缀的摄影画册排版。婚宴为 2026 年 11 月 7 日 17:18，地址是浙江省杭州市临安区太湖源镇界牌头29号。年份按当前年度配置。
 
-修改 `index.html` 或 `assets/` 后推送到 main 分支，GitHub Pages 自动发布。
+## 照片与音乐
 
-## 图片来源
+新人选择的盘发版素材共 12 个系列、73 张，全部保留。使用 480、960、1600 像素宽的 WebP 衍生图片，原构图不裁剪，原文件未改动。系列相册按需加载，支持点开大图、按钮与键盘翻阅、缩放和关闭后焦点恢复；触屏滑动代码已准备，尚待真机验收。
 
-- Hero：Olivia Bauso，Unsplash，https://unsplash.com/photos/sitting-bride-and-groom-kissing-WXCv0vowciQ
-- Moment：engin akyurt，Unsplash，https://unsplash.com/photos/a-table-set-up-for-a-wedding-reception-i3rFV6ULk-o
+`data/wedding.json` 保存姓名、婚期、时间、地址及音频路径。`music.src` 当前为空，等待新人提供音频。提供音频后尝试自动播放；浏览器限制时通过一次“开启请帖”操作播放，并提供暂停、继续和跳过入口。
 
-图片按 Unsplash License 使用：https://unsplash.com/license
+## 回执与私人统计
+
+回执收集姓名和含本人的用餐人数。管理页支持登录后查看报名组数、总用餐人数、明细、同名提示和 CSV 导出；同名不直接合并。宾客在同一浏览器重新提交会更新本人报名。
+
+后端设计为 CloudBase 国内地区的普通事件云函数和私有数据库。**当前 `data/backend.json` 尚未绑定环境，不能接收真实报名；页面会明确显示待开通并禁用提交。** 不向公开仓库保存报名名单、账号密码或服务密钥。
+
+后端开通说明、规则模板、函数部署与验收范围见 [backend/README.md](backend/README.md)。实时监听与每 5 秒校对已经实现；真实云端权限、国内 API 连接和正常联网下 10 秒内显示的目标，仍待环境开通后测试。管理端当前为只读、搜索、导出，没有人工合并、作废或修改名单的功能。
+
+## 本地预览与发布
+
+```sh
+python3 -m http.server 8767 --bind 127.0.0.1
+```
+
+修改后推送 `main` 分支，由 GitHub Pages 发布。前端为静态 HTML、CSS 和 ES 模块，无构建步骤；CloudBase 浏览器 SDK 固定版本并本地打包，许可证见 `assets/vendor/`。
+
+## 已完成的验证
+
+- JavaScript 语法、HTML 标签、图片路径与图片解码、原件哈希保持不变。
+- 浏览器逐个展开 12 系列，数量合计 73；按钮翻页、键盘翻页、缩放、关闭与焦点恢复。
+- 320、390、430、1024 CSS 像素宽下无页面横向溢出。
+- 9 项报名逻辑测试通过，覆盖幂等、并发重试、权限伪造、完整分页、限流、事务回滚和未配置状态。
+- 独立管理模块验证覆盖 205 组、511 人全量汇总，返回缓存页面后同步恢复、旧请求丢弃和 CSV 转义。
+
+实际音频、真机触屏、真实云端报名与实时统计尚未验收，不能把本地测试等同为已上线可用。
