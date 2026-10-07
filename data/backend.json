@@ -1,9 +1,6 @@
 {
-  "provider": "cloudbase",
-  "env": "",
-  "region": "ap-shanghai",
-  "functionName": "wedding-rsvp",
-  "collection": "wedding_rsvps",
-  "adminUid": "",
+  "provider": "supabase",
+  "url": "",
+  "publishableKey": "",
   "pollIntervalMs": 5000
 }

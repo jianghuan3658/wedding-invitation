@@ -97,7 +97,7 @@ function renderAlbums(albums) {
     card.dataset.albumId = album.id;
     card.setAttribute('aria-haspopup', 'dialog');
     card.setAttribute('aria-controls', 'lightbox');
-    card.setAttribute('aria-label', `翻阅${album.title}，共${album.photos.length}张照片`);
+    card.setAttribute('aria-label', `翻阅${album.title}`);
     const cover = text('div', 'album-cover', '');
     const coverPhoto = album.photos[coverIndex(album)];
     cover.append(image(album.cover, photoAlt(album, coverIndex(album)), { width: coverPhoto.width, height: coverPhoto.height }));
@@ -462,7 +462,7 @@ $('#guest-name').addEventListener('input', persistDraft);
 $('#guest-people').addEventListener('input', persistDraft);
 async function connectRsvp() {
   try {
-    state.service = await import('./rsvp-api.js');
+    state.service = await import('./rsvp-api.js?v=4');
     state.configured = state.service.getServiceStatus().configured === true;
   } catch { state.configured = false; }
   $('#submit-rsvp').disabled = !state.configured;

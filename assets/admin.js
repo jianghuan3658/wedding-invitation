@@ -1,4 +1,4 @@
-import { getServiceStatus, getCloudbaseClient, callRsvpFunction } from './rsvp-api.js';
+import { getServiceStatus, signInAdmin, signOutAdmin, getAdminSession, authorizeAdmin, listRsvps, watchRsvpChanges } from './rsvp-api.js?v=4';
 
 const $ = id => document.getElementById(id);
 let rows = [];
@@ -13,6 +13,16 @@ let syncGeneration = 0;
 let resumeAfterHistory = false;
 function status(text, tone = '') { $('sync-status').textContent = text; $('sync-status').dataset.tone = tone; }
 function formatTime(time) { return time ? new Date(time).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '—'; }
+function clearDashboard() {
+  rows = []; lastSuccess = null;
+  $('guest-rows').replaceChildren();
+  for (const id of ['groups-total', 'people-total', 'duplicate-total', 'last-update']) $(id).textContent = '—';
+  $('search').value = '';
+  $('list-description').textContent = '等待读取报名';
+  $('empty-state').hidden = false;
+  $('empty-state').textContent = '正在读取已经保存的报名。';
+  $('export').disabled = true;
+}
 function render() {
   $('groups-total').textContent = rows.length.toLocaleString('zh-CN');
   $('people-total').textContent = rows.reduce((sum, row) => sum + row.people, 0).toLocaleString('zh-CN');
@@ -46,7 +56,7 @@ async function refresh() {
     const complete = new Map();
     const seenCursors = new Set();
     do {
-      const page = await callRsvpFunction({ action: 'list', cursor });
+      const page = await listRsvps({ cursor });
       if (!Array.isArray(page.rows)) throw new Error('分页结果无效');
       for (const row of page.rows) {
         if (!row.id || !Number.isInteger(row.people)) throw new Error('报名结果无效');
@@ -61,7 +71,11 @@ async function refresh() {
     render();
     status(watchConnected ? '实时同步中 · 每 5 秒自动校对' : '自动刷新中 · 每 5 秒更新', 'connected');
   } catch (error) {
-    if (error.code === 'FORBIDDEN' || error.code === 'UNAUTHENTICATED') { stopSync(); $('dashboard').hidden = true; $('login-panel').hidden = false; }
+    if (!active || generation !== syncGeneration) return;
+    if (error.code === 'FORBIDDEN' || error.code === 'UNAUTHENTICATED') {
+      stopSync(); clearDashboard();
+      $('dashboard').hidden = true; $('login-panel').hidden = false;
+    }
     status(lastSuccess ? '连接中断 · 当前为上次成功同步的数据，正在重试' : error.message || '连接失败，正在重试', 'error');
   } finally {
     busy = false;
@@ -74,17 +88,21 @@ function stopSync() {
   try { watcher?.close(); } catch {} watcher = null; watchConnected = false;
 }
 async function startSync() {
-  const { app, config } = getCloudbaseClient();
-  await callRsvpFunction({ action: 'authorize' });
+  const requestedGeneration = syncGeneration;
+  try { await authorizeAdmin(); }
+  catch (error) { if (requestedGeneration !== syncGeneration) return; throw error; }
+  if (requestedGeneration !== syncGeneration) return;
+  stopSync();
+  const generation = syncGeneration;
   active = true;
   $('login-panel').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;
   status('正在读取全部报名…');
   await refresh();
-  if (!active) return;
+  if (!active || generation !== syncGeneration) return;
   // The watch is an invalidation signal, never the complete source of totals.
   // Full pagination runs after changes and every five seconds to reconcile.
   try {
-    watcher = app.database().collection(config.collection).orderBy('updatedAt', 'desc').limit(1).watch({
+    watcher = watchRsvpChanges({
       onChange() { watchConnected = true; void refresh(); },
       onError() { watchConnected = false; if (active) status('实时连接中断 · 已切换每 5 秒自动刷新'); }
     });
@@ -100,22 +118,18 @@ $('login-form').addEventListener('submit', async event => {
   event.preventDefault();
   const button = $('login-button'); button.disabled = true; $('login-error').textContent = '';
   try {
-    const { auth } = getCloudbaseClient();
     const account = $('account').value.trim();
-    const credentials = { password: $('password').value, ...(account.includes('@') ? { email: account } : { username: account }) };
-    const result = await auth.signInWithPassword(credentials);
+    await signInAdmin({ email: account, password: $('password').value });
     $('password').value = '';
-    if (result.error || !result.data?.user) throw new Error('登录失败，请核对账号和密码。');
     await startSync();
   } catch (error) { $('login-error').textContent = error.message || '登录失败，请稍后重试。'; }
   finally { button.disabled = false; }
 });
 $('logout').addEventListener('click', async () => {
-  stopSync(); rows = []; lastSuccess = null;
+  stopSync(); clearDashboard();
   $('dashboard').hidden = true; $('login-panel').hidden = false;
   try {
-    const result = await getCloudbaseClient().auth.signOut({ options: { clearStorage: true } });
-    if (result.error) throw new Error('SIGN_OUT_FAILED');
+    await signOutAdmin();
     $('logout').hidden = true; status('已退出登录');
   } catch {
     $('logout').hidden = false; status('同步已暂停，退出登录未完成。请检查网络后再次点击退出。', 'error');
@@ -141,7 +155,7 @@ if (!getServiceStatus().configured) {
 } else {
   status('请登录后查看报名');
   try {
-    const session = await getCloudbaseClient().auth.getSession();
-    if (!session.error && session.data?.user && !session.data.user.is_anonymous) await startSync();
+    const session = await getAdminSession();
+    if (session?.user && !session.user.is_anonymous) await startSync();
   } catch (error) { status(error.message || '请重新登录'); }
 }

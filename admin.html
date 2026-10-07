@@ -14,14 +14,14 @@
     <div class="page-heading"><p class="eyebrow">GUEST LIST</p><h1>每一份赴约，都在这里。</h1><p>查看用餐人数与报名明细。仅主人账号可读取名单。</p></div>
     <p class="sync" id="sync-status" role="status" aria-live="polite">正在检查服务配置…</p>
     <section class="panel notice" id="unconfigured" hidden><h2>报名服务待开通</h2><p>管理页面已经准备好，目前尚未连接真实云数据库。</p><p>开通并验证后，这里会展示宾客真实提交的姓名和人数。当前不会显示模拟数据或虚假的人数统计。</p><a href="./">返回请帖 →</a></section>
-    <section class="panel login" id="login-panel"><p class="eyebrow">FOR THE HOST</p><h2>主人登录</h2><p>使用为本次婚礼设置的管理账号。</p><form id="login-form"><label for="account">管理账号或邮箱</label><input id="account" autocomplete="username" required maxlength="100"><label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required><p id="login-error" class="error" role="alert"></p><button class="primary" id="login-button" type="submit">登录查看报名</button></form></section>
+    <section class="panel login" id="login-panel"><p class="eyebrow">FOR THE HOST</p><h2>主人登录</h2><p>使用为本次婚礼设置的管理账号。</p><form id="login-form"><label for="account">管理邮箱</label><input id="account" type="email" autocomplete="username" required maxlength="100"><label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required><p id="login-error" class="error" role="alert"></p><button class="primary" id="login-button" type="submit">登录查看报名</button></form></section>
     <section id="dashboard" hidden>
       <div class="summary"><article class="panel"><span>预计用餐人数</span><strong id="people-total">—</strong><small>每组人数包含填写者本人</small></article><article class="panel"><span>已报名组数</span><strong id="groups-total">—</strong><small>每条报名代表一组宾客</small></article><article class="panel"><span>需核对的同名</span><strong id="duplicate-total">—</strong><small>同名不会自动合并</small></article></div>
       <section class="panel list-panel"><div class="list-heading"><div><h2>赴约名单</h2><p id="list-description">正在读取…</p></div><div class="actions"><button class="quiet" id="refresh">立即刷新</button><button class="primary" id="export" disabled>导出表格</button></div></div><label class="search-label" for="search">按姓名查找<input id="search" type="search" placeholder="搜索姓名" autocomplete="off"></label><div class="table-wrap"><table><thead><tr><th scope="col">序号</th><th scope="col">姓名</th><th scope="col">人数</th><th scope="col">最后更新</th><th scope="col">状态</th></tr></thead><tbody id="guest-rows"></tbody></table></div><p id="empty-state" hidden></p><p class="updated">最后成功同步：<span id="last-update">—</span>（北京时间）</p></section>
-      <p class="footnote">同一浏览器重新提交会更新原报名。跨设备重复或同名情况，请人工核对。正常联网时，我们以提交后 10 秒内可见为验收目标；连接中断时保留并标明上次同步数据。</p>
+      <p class="footnote">名单与人数会自动更新。连接中断时，页面会标明上次成功同步的数据。同一浏览器重新提交会更新原报名；跨设备重复或同名情况，请核对后安排席位。</p>
     </section>
   </main>
   <noscript><p class="panel">请启用 JavaScript 后使用报名管理页面。</p></noscript>
-  <script type="module" src="assets/admin.js"></script>
+  <script type="module" src="assets/admin.js?v=4"></script>
 </body>
 </html>

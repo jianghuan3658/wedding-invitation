@@ -1,0 +1,19 @@
+-- Run only in the Supabase SQL Editor or through a trusted management connection.
+-- Replace the one placeholder with the dedicated administrator's Auth user UUID.
+-- Never fill this template and commit the resulting administrator UID or password.
+-- The account must be a permanent email/password user created by an administrator.
+begin;
+do $configure$
+declare
+  v_admin_uid uuid := 'REPLACE_WITH_ADMIN_AUTH_USER_UUID';
+begin
+  if not exists (select 1 from auth.users u where u.id = v_admin_uid
+    and u.is_anonymous is false and u.email is not null and u.email <> '') then
+    raise exception 'The configured administrator must be an existing permanent email/password Auth user.';
+  end if;
+  insert into private.settings(singleton, admin_uid, updated_at)
+    values(true, v_admin_uid, now())
+    on conflict(singleton) do update set admin_uid = excluded.admin_uid, updated_at = excluded.updated_at;
+end;
+$configure$;
+commit;
