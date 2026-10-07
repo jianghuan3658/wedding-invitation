@@ -71,13 +71,7 @@ function applyWedding(wedding) {
 }
 function renderAlbums(albums) {
   state.albums = albums;
-  const heroAlbum = albums.find((album) => album.title === '初见誓约') || albums[0];
-  if (heroAlbum) {
-    $('#hero-photo').src = heroAlbum.cover;
-    $('#hero-photo').alt = photoAlt(heroAlbum, coverIndex(heroAlbum));
-  }
-  const total = albums.reduce((sum, album) => sum + album.photos.length, 0);
-  $('#album-summary').textContent = `${albums.length} 个系列，${total} 张照片。记录我们的不同模样。`;
+  $('#album-summary').textContent = '每一个瞬间，都想与你分享。';
   const featured = ['氧气誓约', '酒红喜韵'].map((title) => albums.find((album) => album.title === title)).filter(Boolean);
   if (!featured.length) featured.push(...albums.slice(0, 2));
   const featuredFrag = document.createDocumentFragment();
@@ -108,7 +102,7 @@ function renderAlbums(albums) {
     const coverPhoto = album.photos[coverIndex(album)];
     cover.append(image(album.cover, photoAlt(album, coverIndex(album)), { width: coverPhoto.width, height: coverPhoto.height }));
     const label = text('div', 'album-label', '');
-    label.append(text('span', 'album-index', String(index + 1).padStart(2, '0')), text('strong', '', album.title), text('small', '', `${album.photos.length} 张`));
+    label.append(text('span', 'album-index', String(index + 1).padStart(2, '0')), text('strong', '', album.title));
     card.append(cover, label);
     card.addEventListener('click', () => openLightbox(album, coverIndex(album), card));
     cards.append(card);
@@ -119,6 +113,10 @@ function renderAlbums(albums) {
 }
 
 const albumRail = $('#album-grid');
+const coverObserver = new IntersectionObserver(([entry]) => {
+  document.body.classList.toggle('cover-active', entry.isIntersecting && entry.intersectionRatio > 0.1);
+}, { threshold: [0, 0.1] });
+coverObserver.observe($('#home'));
 let albumScrollFrame = 0;
 function updateGalleryPosition() {
   const cards = [...albumRail.children];
@@ -407,6 +405,7 @@ function musicState() {
   const playing = !audio.paused && !audio.ended;
   $('#music-toggle').setAttribute('aria-pressed', String(playing));
   $('#music-label').textContent = playing ? '暂停音乐' : '播放音乐';
+  $('#music-toggle').setAttribute('aria-label', playing ? '暂停音乐' : '播放音乐');
 }
 function musicError(message) {
   $('#music-status').textContent = message;

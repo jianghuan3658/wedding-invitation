@@ -1,0 +1,232 @@
+/* A photographic cover; the invitation and album keep their own layout. */
+.masthead {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  right: 20px;
+  z-index: 30;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
+}
+.masthead .wordmark,
+.music-toggle #music-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.masthead .wordmark:focus-visible {
+  width: auto;
+  height: auto;
+  padding: 12px;
+  margin: 0;
+  clip-path: none;
+  background: var(--paper);
+  right: 60px;
+  pointer-events: auto;
+}
+.masthead-end { gap: 0; }
+.masthead .music-toggle {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #fff5;
+  border-radius: 50%;
+  background: #443c3673;
+  backdrop-filter: blur(8px);
+  color: #fff;
+  pointer-events: auto;
+}
+.music-symbol { width: 25px; height: 25px; }
+.music-toggle[aria-pressed="true"] .music-symbol { animation: cover-music 8s linear infinite; }
+.music-status { position: fixed; top: 80px; right: 20px; z-index: 31; max-width: 280px; }
+.wedding-cover {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 620px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 30%, #66534a, #322925 80%);
+  color: #fffaf5;
+}
+.wedding-cover .hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: auto;
+  padding: 0;
+}
+.wedding-cover .hero-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  object-fit: cover;
+  object-position: 50% 22%;
+  background: #66534a;
+}
+.wedding-cover .hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #30251d22 0%, transparent 25%, transparent 43%, #24191218 56%, #24191255 75%, #241912aa 100%);
+  pointer-events: none;
+}
+.cover-imprint {
+  position: absolute;
+  top: calc(22px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font: 8px/1.2 Arial, sans-serif;
+  letter-spacing: .16em;
+  opacity: .83;
+}
+.cover-imprint .cover-seal {
+  border: 1px solid #fff9;
+  border-radius: 50%;
+  padding: 1px 13px 3px;
+  font: italic 16px/1.1 "Snell Roundhand", "Baskerville", Georgia, serif;
+  letter-spacing: -.06em;
+  transform: rotate(-8deg);
+}
+.wedding-cover .hero-copy {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  width: min(100%, 675px);
+  margin: auto;
+  padding: 0 24px;
+  text-align: center;
+}
+.wedding-cover h1 {
+  display: block;
+  margin: 0;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+  font-size: clamp(52px, 17.2vw, 108px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.18;
+  letter-spacing: -.035em;
+  transform: skewX(-6deg);
+  white-space: nowrap;
+  text-shadow: 0 2px 22px #24191220;
+}
+.cover-romance {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  height: 55px;
+  margin-top: -3px;
+}
+.cover-romance > span:first-child {
+  font: italic 13px/1.15 "Baskerville", Georgia, serif;
+  text-align: left;
+  letter-spacing: .015em;
+}
+.cover-script {
+  position: relative;
+  font: italic 65px/1 "Snell Roundhand", "Apple Chancery", "URW Chancery L", "Baskerville", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -.06em;
+  opacity: .78;
+  transform: rotate(-9deg);
+}
+.cover-script::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  bottom: 9px;
+  width: 178px;
+  height: 1px;
+  background: #fff8;
+  transform: rotate(9deg);
+}
+.cover-vow {
+  margin: 15px 0 24px;
+  font: 11px/1.6 var(--serif);
+  letter-spacing: .18em;
+  opacity: .85;
+}
+.cover-names {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font: 25px/1.3 var(--serif);
+  letter-spacing: .09em;
+}
+.cover-names svg { width: 16px; height: 16px; }
+.cover-date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  margin-top: 14px;
+  font: 10px/1.5 Arial, sans-serif;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  opacity: .87;
+}
+.cover-date-divider { width: 1px; height: 10px; background: #fff7; }
+.cover-enter {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 120px;
+  min-height: 44px;
+  margin-top: 17px;
+  color: inherit;
+  font: 9px/1.3 var(--sans);
+  letter-spacing: .18em;
+  opacity: .83;
+  text-decoration: none;
+}
+.cover-enter svg { width: 22px; height: 11px; }
+.cover-enter:hover { opacity: 1; }
+.cover-active .sticky-rsvp { visibility: hidden; pointer-events: none; }
+@media (min-width: 701px) {
+  .wedding-cover .hero-photo { width: min(100%, 75vh); width: min(100%, 75svh); }
+  .wedding-cover .hero-copy { padding-inline: 28px; }
+  .cover-imprint { top: 25px; }
+  .cover-vow { margin-top: 20px; }
+  .cover-names { font-size: 29px; }
+  .cover-date { font-size: 12px; }
+  .masthead { right: max(24px, calc((100vw - 75svh) / 2 + 20px)); }
+}
+@media (max-width: 360px), (max-height: 740px) {
+  .wedding-cover .hero-copy { bottom: calc(17px + env(safe-area-inset-bottom)); padding-inline: 18px; }
+  .wedding-cover h1 { font-size: clamp(50px, 17.2vw, 92px); }
+  .cover-romance { height: 46px; }
+  .cover-script { font-size: 57px; }
+  .cover-vow { margin: 11px 0 18px; font-size: 10px; }
+  .cover-names { font-size: 23px; }
+  .cover-date { margin-top: 11px; font-size: 9px; gap: 8px; }
+  .cover-enter { margin-top: 12px; }
+}
+@keyframes cover-music { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .music-toggle[aria-pressed="true"] .music-symbol { animation: none; } }
