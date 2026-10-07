@@ -1,6 +1,6 @@
 {
   "provider": "supabase",
-  "url": "",
-  "publishableKey": "",
+  "url": "https://xnqgblzvcltiomqfecsn.supabase.co",
+  "publishableKey": "sb_publishable_weqRtSivtg8wApt0jlIZIA_Wo69BZlq",
   "pollIntervalMs": 5000
 }

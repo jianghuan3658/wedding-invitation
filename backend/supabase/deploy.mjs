@@ -17,15 +17,16 @@ function fail(code, message) { throw new DeploymentError(code, message); }
 const usage = `Wedding RSVP Supabase deployment (Node.js 20+)
   node backend/supabase/deploy.mjs list [--token-file PATH]
   node backend/supabase/deploy.mjs prepare --org SLUG --name NAME --create [--apply]
-  node backend/supabase/deploy.mjs deploy --org SLUG --admin-email EMAIL [--project REF] [--apply]
+  node backend/supabase/deploy.mjs deploy --org SLUG --admin-email EMAIL [--project REF] [--org-token-file PATH] [--apply]
 prepare/deploy default to an offline dry-run. --apply explicitly enables cloud writes.
 Credentials: SUPABASE_ACCESS_TOKEN in the environment, or a protected 0600 --token-file.
+Optional --org-token-file is used only for the Free organization plan GET; project calls keep the primary project-scoped token.
 No token/password command-line option is supported. No plan upgrade or resource deletion exists.
 `;
 
 function parseArgs(argv) {
   const result = { command: argv[0], apply: false, create: false };
-  const values = new Set(['org', 'name', 'admin-email', 'project', 'token-file']);
+  const values = new Set(['org', 'name', 'admin-email', 'project', 'token-file', 'org-token-file']);
   const switches = new Set(['apply', 'create', 'dry-run', 'help']);
   for (let index = 1; index < argv.length; index++) {
     const arg = argv[index];
@@ -123,9 +124,9 @@ export async function runCli(argv, options = {}) {
     return;
   }
   const token = await accessToken(args, env);
-  async function request(url, { method = 'GET', body, key, label = 'API request' } = {}) {
+  async function request(url, { method = 'GET', body, key, label = 'API request' } = {}, managementToken = token) {
     const headers = { 'Content-Type': 'application/json' };
-    if (url.startsWith(MANAGEMENT + '/')) headers.Authorization = `Bearer ${token}`;
+    if (url.startsWith(MANAGEMENT + '/')) headers.Authorization = `Bearer ${managementToken}`;
     else if (key) {
       headers.apikey = key;
       if (jwtRole(key)) headers.Authorization = `Bearer ${key}`;
@@ -141,7 +142,12 @@ export async function runCli(argv, options = {}) {
   }
   const api = (path, options) => request(MANAGEMENT + path, options);
   async function requireFree(slug) {
-    const organization = await api(`/organizations/${encodeURIComponent(slug)}`, { label: 'Organization plan check' });
+    // An explicitly supplied organization credential is read independently of the
+    // primary token environment and is never passed to project/database/key APIs.
+    const orgToken = args['org-token-file']
+      ? await accessToken({ 'token-file': args['org-token-file'] }, {}) : token;
+    const organization = await request(MANAGEMENT + `/organizations/${encodeURIComponent(slug)}`,
+      { label: 'Organization plan check' }, orgToken);
     if (organization.plan !== 'free') fail('FREE_PLAN_REQUIRED', 'Only a verified Free organization is permitted; missing or paid plan information is refused.');
     return organization;
   }
